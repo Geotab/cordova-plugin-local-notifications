@@ -31,6 +31,9 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.MessagingStyle.Message;
 import android.support.v4.media.app.NotificationCompat.MediaStyle;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.app.NotificationManager;
+import android.app.NotificationChannel;
+import static android.os.Build.VERSION.SDK_INT;
 
 import java.util.List;
 import java.util.Random;
@@ -415,6 +418,19 @@ public final class Builder {
         return extras != null && extras.getBoolean(EXTRA_UPDATE, false);
     }
 
+    public void initChannels(Context context) {
+        if (SDK_INT < 26) {
+            return;
+        }
+        NotificationManager notificationManager =
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationChannel channel = new NotificationChannel("default",
+                                                            "Channel name",
+                                                            NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription("Channel description");
+        notificationManager.createNotificationChannel(channel);
+    }
+
     /**
      * Returns a cached builder instance or creates a new one.
      */
@@ -423,10 +439,14 @@ public final class Builder {
         NotificationCompat.Builder builder = Notification.getCachedBuilder(key);
 
         if (builder == null) {
-            builder = new NotificationCompat.Builder(context, options.getChannel());
+            if (SDK_INT > 25) {
+                builder = new NotificationCompat.Builder(context, "default");
+            }
+            else {
+                builder = new NotificationCompat.Builder(context, options.getChannel());
+            }
         }
 
         return builder;
     }
-
 }
